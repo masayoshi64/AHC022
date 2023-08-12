@@ -294,7 +294,7 @@ template <typename T = int> struct Graph {
 #define inf 1000000000ll
 #define INF 4000000004000000000LL
 #define mod 998244353ll
-const long double eps = 0.000000000000001;
+const long double eps = 0.0001;
 const long double PI = 3.141592653589793;
 using mint = modint<mod>;
 using vmint = vector<mint>;
@@ -350,7 +350,7 @@ struct MinCostFlow {
                     edge &e = graph[p.second][i];
                     cost_t nextCost = min_cost[p.second] + e.cost +
                                       potential[p.second] - potential[e.to];
-                    if (e.cap > 0 && min_cost[e.to] > nextCost) {
+                    if (e.cap > 0 && min_cost[e.to] > nextCost + eps) {
                         min_cost[e.to] = nextCost;
                         prevv[e.to] = p.second, preve[e.to] = i;
                         que.emplace(min_cost[e.to], e.to);
@@ -386,9 +386,12 @@ struct MinCostFlow {
     }
 };
 
-const int min_tmp = 20;
-const int max_tmp = 980;
-const int max_measurements = 10000;
+const int min_tmp = 300;
+const int max_tmp = 500;
+const int max_measurements = 5000;
+const int measure_cells = 5;
+const vector<int> dx = {0, 0, 1, 0, -1};
+const vector<int> dy = {0, 1, 0, -1, 0};
 double measure(int i, int x, int y){
     cout << i << ' ' << x << ' ' << y << endl;
     double T;
@@ -399,19 +402,19 @@ template<typename T>
 void debug(T x){
     cerr << "# " << x << endl;
 }
+int nml(int x, int L){
+    return (x % L + L) % L;
+}
 
 struct State{
     ll score;
     int L;
     int x, y, dP;
     mat<ll> P;
-    set<pair<int, int>> exits;
-    State(mat<ll> P, vi X, vi Y) : P(P) {
+    set<pair<int, int>> fixed_cells;
+    State(mat<ll> P, set<pair<int, int>> fixed_cells) : P(P), fixed_cells(fixed_cells){
         score = 0;
         L = P.size();
-        rep(i, X.size()){
-            exits.insert(mp(X[i], Y[i]));
-        }
         rep(i, L){
             rep(j, L){
                 score += mypow<ll>(P[i][(j + 1) % L] - P[i][j], 2);
@@ -422,7 +425,7 @@ struct State{
     ll get_new_score(){
         x = xor64(P.size());
         y = xor64(P.size());
-        while(exits.count(mp(x, y))){
+        while(fixed_cells.count(mp(x, y))){
             x = xor64(P.size());
             y = xor64(P.size());
         }
@@ -480,28 +483,40 @@ int main(int argc, char *argv[]) {
     }
 
     // 配置
-    vi exit_tmps(N);
+    mat<int> true_tmps(N, vi(measure_cells, 0));
     mat<ll> P(L, vl(L, 0));
-    int dT = (max_tmp - min_tmp) / N;
-    rep(i, N) {
-        exit_tmps[i] = min_tmp + i * dT;
-    }
+    set<pair<int, int>> fixed_cells;
     rep(x, L){
         rep(y, L){
-            double normalization = 0;
-            rep(i, N){
-                double weight = exp(-0.1 * (abs(x - X[i]) + abs(y - Y[i])));
-                P[x][y] += weight * exit_tmps[i];
-                normalization += weight;
-
-            }
-            P[x][y] /= normalization;
+            P[x][y] = xor64(max_tmp - min_tmp) + min_tmp;
         }
     }
     rep(i, N){
-        P[X[i]][Y[i]] = exit_tmps[i];
+        rep(j, measure_cells){
+            int x = nml(X[i] + dx[j], L);
+            int y = nml(Y[i] + dy[j], L);
+            true_tmps[i][j] = P[x][y];
+            fixed_cells.insert(mp(x, y));
+        }
     }
-    State state(P, X, Y);
+    rep(x, L){
+        rep(y, L){
+            if(fixed_cells.count(mp(x, y))) continue;
+            double normalization = 0;
+            double sum_ = 0;
+            rep(i, N){
+                rep(j, measure_cells){
+                    int nx = nml(X[i] + dx[j], L);
+                    int ny = nml(Y[i] + dy[j], L);
+                    double weight = exp(-0.1 * (abs(x - X[i]) + abs(y - Y[i])));
+                    sum_ += weight * P[nx][ny];
+                    normalization += weight;
+                }
+            }
+            P[x][y] = sum_ / normalization;
+        }
+    }
+    State state(P, fixed_cells);
     state = hill_climbing(state);
     rep(i, L) {
         rep(j, L){
@@ -511,11 +526,13 @@ int main(int argc, char *argv[]) {
     }
 
     //計測
-    int m = max_measurements / N;
-    vector<double> ave_tmps(N);
+    int measure_times = max_measurements / N / measure_cells;
+    mat<double> estimated_tmps(N, vector<double>(measure_cells, 0));
     rep(i, N){
-        rep(j, m){
-            ave_tmps[i] += measure(i, 0, 0) / m;
+        rep(j, measure_cells){
+            rep(_, measure_times){
+                estimated_tmps[i][j] += measure(i, dx[j], dy[j]) / measure_times;   
+            }
         }
     }
     cout << -1 << ' ' << -1 << ' ' << -1 << endl;
@@ -526,7 +543,10 @@ int main(int argc, char *argv[]) {
         mcf.add_edge(N * 2, i, 1, 0);
         mcf.add_edge(N + i, N * 2 + 1, 1, 0);
         rep(j, N){
-            double cost = mypow<double>(ave_tmps[i] - exit_tmps[j], 2);
+            double cost = 0;
+            rep(k, measure_cells){
+                cost += mypow<double>(estimated_tmps[i][k] - true_tmps[j][k], 2); 
+            }
             mcf.add_edge(i, N + j, 1, cost);
         }
     }
