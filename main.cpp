@@ -309,7 +309,6 @@ long long xor64(long long range) {
 template <typename flow_t, typename cost_t>
 struct MinCostFlow {
     const cost_t TINF;
-
     struct edge {
         int to;
         flow_t cap;
@@ -388,7 +387,7 @@ struct MinCostFlow {
 };
 
 const int min_tmp = 20;
-const int max_tmp = 1000;
+const int max_tmp = 980;
 const int max_measurements = 10000;
 double measure(int i, int x, int y){
     cout << i << ' ' << x << ' ' << y << endl;
@@ -396,6 +395,75 @@ double measure(int i, int x, int y){
     cin >> T;
     return T;
 }
+template<typename T>
+void debug(T x){
+    cerr << "# " << x << endl;
+}
+
+struct State{
+    ll score;
+    int L;
+    int x, y, dP;
+    mat<ll> P;
+    set<pair<int, int>> exits;
+    State(mat<ll> P, vi X, vi Y) : P(P) {
+        score = 0;
+        L = P.size();
+        rep(i, X.size()){
+            exits.insert(mp(X[i], Y[i]));
+        }
+        rep(i, L){
+            rep(j, L){
+                score += mypow<ll>(P[i][(j + 1) % L] - P[i][j], 2);
+                score += mypow<ll>(P[(i + 1) % L][j] - P[i][j], 2);
+            }
+        }
+    }
+    ll get_new_score(){
+        x = xor64(P.size());
+        y = xor64(P.size());
+        while(exits.count(mp(x, y))){
+            x = xor64(P.size());
+            y = xor64(P.size());
+        }
+        dP = xor64(2) * 2 - 1;
+        if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
+        ll new_score = score;
+        new_score -= mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
+        new_score -= mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
+        new_score -= mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
+        new_score -= mypow<ll>(P[(x - 1 + L) % L][y] - P[x][y], 2);
+        P[x][y] += dP;
+        new_score += mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
+        new_score += mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
+        new_score += mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
+        new_score += mypow<ll>(P[(x - 1 + L) % L][y] - P[x][y], 2);
+        P[x][y] -= dP;
+        return new_score;
+    }  
+
+    void step(){
+        P[x][y] += dP;
+    } // 実際の更新
+
+    bool operator<(const State &rhs) const {
+        return score < rhs.score;
+    }
+};
+
+State hill_climbing(State state){
+    Timer timer;
+    double max_time = 1500;
+    while (timer.lap() < max_time) {
+        double score = state.score;
+        double new_score = state.get_new_score();
+        if (new_score < score) {
+            state.step();
+        }
+    }
+    return state;
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -413,17 +481,31 @@ int main(int argc, char *argv[]) {
 
     // 配置
     vi exit_tmps(N);
-    mat<int> P(L, vi(L, 0));
+    mat<ll> P(L, vl(L, 0));
     int dT = (max_tmp - min_tmp) / N;
     rep(i, N) {
         exit_tmps[i] = min_tmp + i * dT;
     }
+    rep(x, L){
+        rep(y, L){
+            double normalization = 0;
+            rep(i, N){
+                double weight = exp(-0.1 * (abs(x - X[i]) + abs(y - Y[i])));
+                P[x][y] += weight * exit_tmps[i];
+                normalization += weight;
+
+            }
+            P[x][y] /= normalization;
+        }
+    }
     rep(i, N){
         P[X[i]][Y[i]] = exit_tmps[i];
     }
+    State state(P, X, Y);
+    state = hill_climbing(state);
     rep(i, L) {
         rep(j, L){
-            cout << P[i][j] << ' ';
+            cout << state.P[i][j] << ' ';
         }
         cout << endl;
     }
