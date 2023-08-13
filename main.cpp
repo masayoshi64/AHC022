@@ -293,11 +293,7 @@ template <typename T = int> struct Graph {
 // constant
 #define inf 1000000000ll
 #define INF 4000000004000000000LL
-#define mod 998244353ll
-const long double eps = 0.0001;
-const long double PI = 3.141592653589793;
-using mint = modint<mod>;
-using vmint = vector<mint>;
+const long double eps = 1;
 
 long long xor64(long long range) {
     static uint64_t x = 88172645463325252ULL;
@@ -306,6 +302,7 @@ long long xor64(long long range) {
     return (x ^= x << 17) % range;
 }
 
+/* #region min cost flow */
 template <typename flow_t, typename cost_t>
 struct MinCostFlow {
     const cost_t TINF;
@@ -385,13 +382,16 @@ struct MinCostFlow {
         }
     }
 };
+/* #endregion*/
 
-const int min_tmp = 300;
-const int max_tmp = 500;
-const int max_measurements = 5000;
-const int measure_cells = 5;
-const vector<int> dx = {0, 0, 1, 0, -1};
-const vector<int> dy = {0, 1, 0, -1, 0};
+int min_tmp = 50;
+int max_tmp = 950;
+int max_measurements = 1000;
+int measure_cells = 5;
+
+const vector<int> dx = {0, 0, 1, 0, -1, 1, 1, -1, -1};
+const vector<int> dy = {0, 1, 0, -1, 0, 1, -1, 1, -1};
+
 double measure(int i, int x, int y){
     cout << i << ' ' << x << ' ' << y << endl;
     double T;
@@ -407,7 +407,7 @@ int nml(int x, int L){
 }
 
 struct State{
-    ll score;
+    ll score, new_score;
     int L;
     int x, y, dP;
     mat<ll> P;
@@ -431,7 +431,7 @@ struct State{
         }
         dP = xor64(2) * 2 - 1;
         if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
-        ll new_score = score;
+        new_score = score;
         new_score -= mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
         new_score -= mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
         new_score -= mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
@@ -447,6 +447,7 @@ struct State{
 
     void step(){
         P[x][y] += dP;
+        score = new_score;
     } // 実際の更新
 
     bool operator<(const State &rhs) const {
@@ -467,12 +468,11 @@ State hill_climbing(State state){
     return state;
 }
 
-
-
 int main(int argc, char *argv[]) {
     cin.tie(0);
     ios::sync_with_stdio(0);
     cout << setprecision(30) << fixed;
+    cerr << setprecision(30) << fixed;
 
     // 入力
     int L, N, S;
@@ -517,16 +517,56 @@ int main(int argc, char *argv[]) {
         }
     }
     State state(P, fixed_cells);
-    state = hill_climbing(state);
+    if(fixed_cells.size() < L * L) state = hill_climbing(state);
+
+    double min_dist = INF;
+    rep(i, N){
+        rep(j, i + 1, N){
+            double dist = 0;
+            rep(k, measure_cells){
+                dist += mypow<ll>(true_tmps[i][k] - true_tmps[j][k], 2);
+            }
+            chmin(min_dist, dist);
+        }
+    }
+
+    int measure_times = max_measurements / N / measure_cells;
+    double placement_cost = state.score;
+    double measurement_cost = measure_times * N * measure_cells * 1000;
+    double level = 2.5;
+    
+    // 最適化
+    double measure_coef = sqrt(level * placement_cost * S * S / min_dist / measure_times / measurement_cost);
+    chmax(measure_coef, level * S * S / min_dist / measure_times);
+    chmin(measure_coef, 1.0);
+    double tmp_coef = level * S * S / min_dist / measure_times / measure_coef;
+    chmin(tmp_coef, 1.0);
+
+    // debug
+    debug(measure_coef);
+    debug(tmp_coef);
+    debug((double) tmp_coef * min_dist * measure_coef * measure_times / (S * S));
+
+    measure_times = (double)measure_times * measure_coef;
+    chmax(measure_times, 1);
+
     rep(i, L) {
         rep(j, L){
+            state.P[i][j] = (double)state.P[i][j] * sqrt(tmp_coef);
             cout << state.P[i][j] << ' ';
         }
         cout << endl;
     }
+    rep(i, N){
+        rep(j, measure_cells){
+            int x = nml(X[i] + dx[j], L);
+            int y = nml(Y[i] + dy[j], L);
+            true_tmps[i][j] = P[x][y];
+            fixed_cells.insert(mp(x, y));
+        }
+    }
 
     //計測
-    int measure_times = max_measurements / N / measure_cells;
     mat<double> estimated_tmps(N, vector<double>(measure_cells, 0));
     rep(i, N){
         rep(j, measure_cells){
@@ -551,6 +591,7 @@ int main(int argc, char *argv[]) {
         }
     }
     mcf.min_cost_flow(N * 2, N * 2 + 1, N);
+
     vi E(N);
     rep(i, N){
         for(auto& e : mcf.graph[i]){
