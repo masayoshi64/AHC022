@@ -384,13 +384,12 @@ struct MinCostFlow {
 };
 /* #endregion*/
 
-int min_tmp = 50;
-int max_tmp = 950;
-int max_measurements = 1000;
-int measure_cells = 5;
+int min_tmp = 0;
+int max_tmp = 1000;
+int max_measurements = 10000;
 
-const vector<int> dx = {0, 0, 1, 0, -1, 1, 1, -1, -1};
-const vector<int> dy = {0, 1, 0, -1, 0, 1, -1, 1, -1};
+const vector<int> dx = {0, 0, 1, 0, -1, 1, 1, -1, -1, 2, 0, -2, 0, 2, -2, 2, -2};
+const vector<int> dy = {0, 1, 0, -1, 0, 1, -1, 1, -1, 0, 2, 0, -2, 2, 2, -2, -2};
 
 double measure(int i, int x, int y){
     cout << i << ' ' << x << ' ' << y << endl;
@@ -483,6 +482,9 @@ int main(int argc, char *argv[]) {
     }
 
     // 配置
+    int measure_cells = 5;
+    if(S >= 100) measure_cells = 9;
+    else if(S >= 300) measure_cells = 13;
     mat<int> true_tmps(N, vi(measure_cells, 0));
     mat<ll> P(L, vl(L, 0));
     set<pair<int, int>> fixed_cells;
@@ -533,7 +535,7 @@ int main(int argc, char *argv[]) {
     int measure_times = max_measurements / N / measure_cells;
     double placement_cost = state.score;
     double measurement_cost = measure_times * N * measure_cells * 1000;
-    double level = 2.5;
+    double level = 10;
     
     // 最適化
     double measure_coef = sqrt(level * placement_cost * S * S / min_dist / measure_times / measurement_cost);
