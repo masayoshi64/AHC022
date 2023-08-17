@@ -293,7 +293,7 @@ template <typename T = int> struct Graph {
 // constant
 #define inf 1000000000ll
 #define INF 4000000004000000000LL
-const long double eps = 1;
+const long double eps = 10;
 
 long long xor64(long long range) {
     static uint64_t x = 88172645463325252ULL;
@@ -347,7 +347,7 @@ struct MinCostFlow {
                     edge &e = graph[p.second][i];
                     cost_t nextCost = min_cost[p.second] + e.cost +
                                       potential[p.second] - potential[e.to];
-                    if (e.cap > 0 && min_cost[e.to] > nextCost + eps) {
+                    if (e.cap > 0 && min_cost[e.to] > nextCost) {
                         min_cost[e.to] = nextCost;
                         prevv[e.to] = p.second, preve[e.to] = i;
                         que.emplace(min_cost[e.to], e.to);
@@ -484,13 +484,16 @@ int main(int argc, char *argv[]) {
     // 配置
     int measure_cells = 5;
     if(S >= 100) measure_cells = 9;
-    else if(S >= 300) measure_cells = 13;
     mat<int> true_tmps(N, vi(measure_cells, 0));
     mat<ll> P(L, vl(L, 0));
     set<pair<int, int>> fixed_cells;
     rep(x, L){
         rep(y, L){
-            P[x][y] = xor64(max_tmp - min_tmp) + min_tmp;
+            if(S <= 750){
+                P[x][y] = xor64(max_tmp - min_tmp) + min_tmp;
+            }else{
+                P[x][y] = xor64(2) * 1000;
+            }
         }
     }
     rep(i, N){
@@ -548,6 +551,7 @@ int main(int argc, char *argv[]) {
     debug(measure_coef);
     debug(tmp_coef);
     debug((double) tmp_coef * min_dist * measure_coef * measure_times / (S * S));
+    debug(S);
 
     measure_times = (double)measure_times * measure_coef;
     chmax(measure_times, 1);
@@ -580,7 +584,7 @@ int main(int argc, char *argv[]) {
     cout << -1 << ' ' << -1 << ' ' << -1 << endl;
 
     // 回答
-    MinCostFlow<int, double> mcf(N * 2 + 2);
+    MinCostFlow<int, ll> mcf(N * 2 + 2);
     rep(i, N){
         mcf.add_edge(N * 2, i, 1, 0);
         mcf.add_edge(N + i, N * 2 + 1, 1, 0);
