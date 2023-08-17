@@ -567,7 +567,7 @@ int main(int argc, char *argv[]) {
         rep(j, measure_cells){
             int x = nml(X[i] + dx[j], L);
             int y = nml(Y[i] + dy[j], L);
-            true_tmps[i][j] = P[x][y];
+            true_tmps[i][j] = state.P[x][y];
             fixed_cells.insert(mp(x, y));
         }
     }
