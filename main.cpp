@@ -490,9 +490,9 @@ int main(int argc, char *argv[]) {
     rep(x, L){
         rep(y, L){
             if(S <= 750){
-                P[x][y] = xor64(max_tmp - min_tmp) + min_tmp;
+                P[x][y] = xor64(max_tmp);
             }else{
-                P[x][y] = xor64(2) * 1000;
+                P[x][y] = xor64(2) * max_tmp;
             }
         }
     }
@@ -558,7 +558,7 @@ int main(int argc, char *argv[]) {
 
     rep(i, L) {
         rep(j, L){
-            state.P[i][j] = (double)state.P[i][j] * sqrt(tmp_coef);
+            state.P[i][j] = (double)state.P[i][j] * sqrt(tmp_coef) + (1 - sqrt(tmp_coef)) * max_tmp / 2;
             cout << state.P[i][j] << ' ';
         }
         cout << endl;
