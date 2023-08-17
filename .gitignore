@@ -3,3 +3,4 @@ tools
 *.out
 *.out.dSYM
 .venv
+.DS_store
