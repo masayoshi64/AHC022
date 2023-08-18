@@ -433,7 +433,7 @@ struct State1{
             x = xor64(P.size());
             y = xor64(P.size());
         }
-        int dP = xor64(2) * 2 - 1;
+        int dP = (P[nml(x + 1)][nml(y)] + P[nml(x - 1)][nml(y)] + P[nml(x)][nml(y + 1)] + P[nml(x)][nml(y - 1)]) / 4 - P[x][y];
         if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
         return {x, y, dP};
     }
@@ -610,7 +610,7 @@ int main(int argc, char *argv[]) {
         }
     }
     State1 state(P, fixed_cells);
-    if(fixed_cells.size() < L * L) state = hill_climbing<State1, Change1>(state, 1500);
+    if(fixed_cells.size() < L * L) state = hill_climbing<State1, Change1>(state, 100);
 
     double min_dist = INF;
     rep(i, N){
