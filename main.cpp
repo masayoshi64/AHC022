@@ -568,6 +568,7 @@ int main(int argc, char *argv[]) {
     int measure_cells = 5;
     if(S >= 100) measure_cells = 9;
     if(S >= 750) measure_cells = 13;
+    if(N * measure_cells / L / L > 0.5) measure_cells += 4;
     mat<int> true_tmps(N, vi(measure_cells, 0));
     mat<ll> P(L, vl(L, 0));
     set<pair<int, int>> fixed_cells;
@@ -581,7 +582,7 @@ int main(int argc, char *argv[]) {
         }
     }
     State2 state2(P, measure_cells);
-    state2 = hill_climbing<State2, Change2>(state2, 100);
+    state2 = hill_climbing<State2, Change2>(state2, 3000);
     P = state2.P;
 
     rep(i, N){
