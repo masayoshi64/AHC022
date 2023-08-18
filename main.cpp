@@ -472,7 +472,7 @@ struct Change2{
 
 
 struct State2{
-    ll score;
+    double score;
     int L;
     mat<ll> P;
     int measure_cell;
@@ -490,15 +490,23 @@ struct State2{
         return dist;
     }
 
-    ll calc_score(){
-        ll score_ = INF;
+    double calc_score(){
+        vl dists;
+        ll min_dist = INF;
+        ll cnt = 0;
         rep(i, N){
             rep(j, i+1, N){
                 ll dist = calc_dist(i, j);
-                if(chmin(score_, dist)) min_i = i;
+                dists.pb(dist);
+                if(chmin(min_dist, dist)) min_i = i;
             }
         }
-        return - score_;
+        for(ll dist: dists){
+            if(dist == min_dist) cnt++;
+        }
+        debug(min_dist);
+        debug(cnt);
+        return -min_dist * 1000 + cnt;
     }
 
     State2(mat<ll> P, int measure_cell) : P(P), measure_cell(measure_cell){
@@ -510,20 +518,20 @@ struct State2{
         int k = xor64(measure_cell);
         int x = nml(X[i] + dx[k]);
         int y = nml(Y[i] + dy[k]);
-        int dP = xor64(2) * 2 - 1;
+        int dP = xor64(max_tmp) - max_tmp / 2;
         if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
         return {x, y, dP};
     }
 
-    ll get_new_score(Change2 c){
+    double get_new_score(Change2 c){
         int x = c.x, y = c.y, dP = c.dP;
         P[x][y] += dP;
-        ll new_score = calc_score();
+        double new_score = calc_score();
         P[x][y] -= dP;
         return new_score;
     }  
 
-    void step(Change2 c, ll new_score){
+    void step(Change2 c, double new_score){
         int x = c.x, y = c.y, dP = c.dP;
         P[x][y] += dP;
         score = new_score;
@@ -534,7 +542,7 @@ struct State2{
 template<typename State, typename Change>
 State hill_climbing(State state){
     Timer timer;
-    double max_time = 100;
+    double max_time = 1500;
     while (timer.lap() < max_time) {
         double score = state.score;
         Change change = state.generate_change();
