@@ -18,11 +18,11 @@ typedef vector<vector<char>> vvc;
 // abreviations
 #define all(x) (x).begin(), (x).end()
 #define rall(x) (x).rbegin(), (x).rend()
-#define rep_(i, a_, b_, a, b, ...) for (ll i = (a), max_i = (b); i < max_i; i++)
+#define rep_(i , a_, b_, a, b, ...) for (ll i = (a); i < b; i++)
 #define rep(i, ...) rep_(i, __VA_ARGS__, __VA_ARGS__, 0, __VA_ARGS__)
-#define rrep_(i, a_, b_, a, b, ...) for (ll i = (b - 1), min_i = (a); i >= min_i; i--)
+#define rrep_(i, a_, b_, a, b, ...) for (ll i = (b - 1); i >= a; i--)
 #define rrep(i, ...) rrep_(i, __VA_ARGS__, __VA_ARGS__, 0, __VA_ARGS__)
-#define srep(i, a, b, c) for (ll i = (a), max_i = (b); i < max_i; i += c)
+#define srep(i, a, b, c) for (ll i = (a); i < b; i += c)
 #define SZ(x) ((int)(x).size())
 #define pb(x) push_back(x)
 #define eb(x) emplace_back(x)
@@ -293,7 +293,6 @@ template <typename T = int> struct Graph {
 // constant
 #define inf 1000000000ll
 #define INF 4000000004000000000LL
-const long double eps = 10;
 
 long long xor64(long long range) {
     static uint64_t x = 88172645463325252ULL;
@@ -387,9 +386,11 @@ struct MinCostFlow {
 int min_tmp = 0;
 int max_tmp = 1000;
 int max_measurements = 10000;
-
 const vector<int> dx = {0, 0, 1, 0, -1, 1, 1, -1, -1, 2, 0, -2, 0, 2, -2, 2, -2};
 const vector<int> dy = {0, 1, 0, -1, 0, 1, -1, 1, -1, 0, 2, 0, -2, 2, 2, -2, -2};
+
+vi X, Y;
+int N, L, S;
 
 double measure(int i, int x, int y){
     cout << i << ' ' << x << ' ' << y << endl;
@@ -401,19 +402,22 @@ template<typename T>
 void debug(T x){
     cerr << "# " << x << endl;
 }
-int nml(int x, int L){
+int nml(int x){
     return (x % L + L) % L;
 }
 
-struct State{
-    ll score, new_score;
-    int L;
+
+struct Change1{
     int x, y, dP;
+};
+
+
+struct State1{
+    ll score;
     mat<ll> P;
     set<pair<int, int>> fixed_cells;
-    State(mat<ll> P, set<pair<int, int>> fixed_cells) : P(P), fixed_cells(fixed_cells){
+    State1(mat<ll> P, set<pair<int, int>> fixed_cells) : P(P), fixed_cells(fixed_cells){
         score = 0;
-        L = P.size();
         rep(i, L){
             rep(j, L){
                 score += mypow<ll>(P[i][(j + 1) % L] - P[i][j], 2);
@@ -421,16 +425,22 @@ struct State{
             }
         }
     }
-    ll get_new_score(){
-        x = xor64(P.size());
-        y = xor64(P.size());
+
+    Change1 generate_change(){
+        int x = xor64(P.size());
+        int y = xor64(P.size());
         while(fixed_cells.count(mp(x, y))){
             x = xor64(P.size());
             y = xor64(P.size());
         }
-        dP = xor64(2) * 2 - 1;
+        int dP = xor64(2) * 2 - 1;
+        return {x, y, dP};
+    }
+
+    ll get_new_score(Change1 c){
+        int x = c.x, y = c.y, dP = c.dP;
         if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
-        new_score = score;
+        ll new_score = score;
         new_score -= mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
         new_score -= mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
         new_score -= mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
@@ -444,24 +454,85 @@ struct State{
         return new_score;
     }  
 
-    void step(){
+    void step(Change1 c, ll new_score){
+        int x = c.x, y = c.y, dP = c.dP;
         P[x][y] += dP;
         score = new_score;
     } // 実際の更新
 
-    bool operator<(const State &rhs) const {
+    bool operator<(const State1 &rhs) const {
         return score < rhs.score;
     }
 };
 
+
+struct Change2{
+    int x, y, dP;
+};
+
+
+// struct State2{
+//     ll score;
+//     int L;
+//     mat<ll> P;
+//     int measure_cell;
+//     State2(mat<ll> P, int measure_cell) : P(P), measure_cell(measure_cell){
+//         ll score = 0;
+//         rep(i, N){
+
+//         }
+//     }
+
+//     Change1 generate_change(){
+//         int x = xor64(P.size());
+//         int y = xor64(P.size());
+//         while(fixed_cells.count(mp(x, y))){
+//             x = xor64(P.size());
+//             y = xor64(P.size());
+//         }
+//         int dP = xor64(2) * 2 - 1;
+//         return {x, y, dP};
+//     }
+
+//     ll get_new_score(Change1 c){
+//         int x = c.x, y = c.y, dP = c.dP;
+//         if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
+//         ll new_score = score;
+//         new_score -= mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
+//         new_score -= mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
+//         new_score -= mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
+//         new_score -= mypow<ll>(P[(x - 1 + L) % L][y] - P[x][y], 2);
+//         P[x][y] += dP;
+//         new_score += mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
+//         new_score += mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
+//         new_score += mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
+//         new_score += mypow<ll>(P[(x - 1 + L) % L][y] - P[x][y], 2);
+//         P[x][y] -= dP;
+//         return new_score;
+//     }  
+
+//     void step(Change1 c, ll new_score){
+//         int x = c.x, y = c.y, dP = c.dP;
+//         P[x][y] += dP;
+//         score = new_score;
+//     } // 実際の更新
+
+//     bool operator<(const State1 &rhs) const {
+//         return score < rhs.score;
+//     }
+// };
+
+
+template<typename State, typename Change>
 State hill_climbing(State state){
     Timer timer;
     double max_time = 1500;
     while (timer.lap() < max_time) {
         double score = state.score;
-        double new_score = state.get_new_score();
+        Change change = state.generate_change();
+        double new_score = state.get_new_score(change);
         if (new_score < score) {
-            state.step();
+            state.step(change, new_score);
         }
     }
     return state;
@@ -474,9 +545,8 @@ int main(int argc, char *argv[]) {
     cerr << setprecision(30) << fixed;
 
     // 入力
-    int L, N, S;
     cin >> L >> N >> S;
-    vi X(N), Y(N);
+    X.resize(N), Y.resize(N);
     rep(i, N) {
         cin >> X[i] >> Y[i];
     }
@@ -498,8 +568,8 @@ int main(int argc, char *argv[]) {
     }
     rep(i, N){
         rep(j, measure_cells){
-            int x = nml(X[i] + dx[j], L);
-            int y = nml(Y[i] + dy[j], L);
+            int x = nml(X[i] + dx[j]);
+            int y = nml(Y[i] + dy[j]);
             true_tmps[i][j] = P[x][y];
             fixed_cells.insert(mp(x, y));
         }
@@ -511,8 +581,8 @@ int main(int argc, char *argv[]) {
             double sum_ = 0;
             rep(i, N){
                 rep(j, measure_cells){
-                    int nx = nml(X[i] + dx[j], L);
-                    int ny = nml(Y[i] + dy[j], L);
+                    int nx = nml(X[i] + dx[j]);
+                    int ny = nml(Y[i] + dy[j]);
                     double weight = exp(-0.1 * (abs(x - X[i]) + abs(y - Y[i])));
                     sum_ += weight * P[nx][ny];
                     normalization += weight;
@@ -521,8 +591,8 @@ int main(int argc, char *argv[]) {
             P[x][y] = sum_ / normalization;
         }
     }
-    State state(P, fixed_cells);
-    if(fixed_cells.size() < L * L) state = hill_climbing(state);
+    State1 state(P, fixed_cells);
+    if(fixed_cells.size() < L * L) state = hill_climbing<State1, Change1>(state);
 
     double min_dist = INF;
     rep(i, N){
@@ -565,8 +635,8 @@ int main(int argc, char *argv[]) {
     }
     rep(i, N){
         rep(j, measure_cells){
-            int x = nml(X[i] + dx[j], L);
-            int y = nml(Y[i] + dy[j], L);
+            int x = nml(X[i] + dx[j]);
+            int y = nml(Y[i] + dy[j]);
             true_tmps[i][j] = state.P[x][y];
             fixed_cells.insert(mp(x, y));
         }
