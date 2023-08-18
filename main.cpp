@@ -540,7 +540,7 @@ struct State2{
 template<typename State, typename Change>
 State hill_climbing(State state){
     Timer timer;
-    double max_time = 1500;
+    double max_time = 100;
     while (timer.lap() < max_time) {
         double score = state.score;
         Change change = state.generate_change();
