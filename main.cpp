@@ -574,7 +574,11 @@ int main(int argc, char *argv[]) {
     set<pair<int, int>> fixed_cells;
     rep(x, L){
         rep(y, L){
-            P[x][y] = xor64(max_tmp);
+            if(S <= 750){
+                P[x][y] = xor64(max_tmp);
+            }else{
+                P[x][y] = xor64(2) * max_tmp;
+            }
         }
     }
     State2 state2(P, measure_cells);
