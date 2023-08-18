@@ -504,8 +504,6 @@ struct State2{
         for(ll dist: dists){
             if(dist == min_dist) cnt++;
         }
-        debug(min_dist);
-        debug(cnt);
         return -min_dist * 1000 + cnt;
     }
 
@@ -628,7 +626,7 @@ int main(int argc, char *argv[]) {
     int measure_times = max_measurements / N / measure_cells;
     double placement_cost = state.score;
     double measurement_cost = measure_times * N * measure_cells * 1000;
-    double level = 10;
+    double level = 15;
     
     // 最適化
     double measure_coef = sqrt(level * placement_cost * S * S / min_dist / measure_times / measurement_cost);
@@ -636,12 +634,6 @@ int main(int argc, char *argv[]) {
     chmin(measure_coef, 1.0);
     double tmp_coef = level * S * S / min_dist / measure_times / measure_coef;
     chmin(tmp_coef, 1.0);
-
-    // debug
-    debug(measure_coef);
-    debug(tmp_coef);
-    debug((double) tmp_coef * min_dist * measure_coef * measure_times / (S * S));
-    debug(S);
 
     measure_times = (double)measure_times * measure_coef;
     chmax(measure_times, 1);
