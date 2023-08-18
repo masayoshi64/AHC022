@@ -538,9 +538,8 @@ struct State2{
 
 
 template<typename State, typename Change>
-State hill_climbing(State state){
+State hill_climbing(State state, double max_time){
     Timer timer;
-    double max_time = 1500;
     while (timer.lap() < max_time) {
         double score = state.score;
         Change change = state.generate_change();
@@ -582,7 +581,7 @@ int main(int argc, char *argv[]) {
         }
     }
     State2 state2(P, measure_cells);
-    state2 = hill_climbing<State2, Change2>(state2);
+    state2 = hill_climbing<State2, Change2>(state2, 1500);
     P = state2.P;
 
     rep(i, N){
@@ -611,7 +610,7 @@ int main(int argc, char *argv[]) {
         }
     }
     State1 state(P, fixed_cells);
-    if(fixed_cells.size() < L * L) state = hill_climbing<State1, Change1>(state);
+    if(fixed_cells.size() < L * L) state = hill_climbing<State1, Change1>(state, 1500);
 
     double min_dist = INF;
     rep(i, N){
