@@ -581,7 +581,7 @@ int main(int argc, char *argv[]) {
         }
     }
     State2 state2(P, measure_cells);
-    state2 = hill_climbing<State2, Change2>(state2, 1500);
+    state2 = hill_climbing<State2, Change2>(state2, 100);
     P = state2.P;
 
     rep(i, N){
@@ -641,6 +641,15 @@ int main(int argc, char *argv[]) {
     rep(i, L) {
         rep(j, L){
             state.P[i][j] = (double)state.P[i][j] * sqrt(tmp_coef) + (1 - sqrt(tmp_coef)) * max_tmp / 2;
+        }
+    }
+
+    min_tmp = (1 - sqrt(tmp_coef)) * max_tmp / 2;
+    max_tmp = (1 + sqrt(tmp_coef)) * max_tmp / 2;
+    if(fixed_cells.size() < L * L) state = hill_climbing<State1, Change1>(state, 100);
+
+    rep(i, L) {
+        rep(j, L){
             cout << state.P[i][j] << ' ';
         }
         cout << endl;
