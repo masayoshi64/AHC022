@@ -471,56 +471,64 @@ struct Change2{
 };
 
 
-// struct State2{
-//     ll score;
-//     int L;
-//     mat<ll> P;
-//     int measure_cell;
-//     State2(mat<ll> P, int measure_cell) : P(P), measure_cell(measure_cell){
-//         ll score = 0;
-//         rep(i, N){
+struct State2{
+    ll score;
+    int L;
+    mat<ll> P;
+    int measure_cell;
+    int min_i;
 
-//         }
-//     }
+    ll calc_dist(int i, int j){
+        ll dist = 0;
+        rep(k, measure_cell){
+            int xi = nml(X[i] + dx[k]);
+            int yi = nml(Y[i] + dy[k]);
+            int xj = nml(X[j] + dx[k]); 
+            int yj = nml(Y[j] + dy[k]);
+            dist += (P[xi][yi] - P[xj][yj]) * (P[xi][yi] - P[xj][yj]);
+        }
+        return dist;
+    }
 
-//     Change1 generate_change(){
-//         int x = xor64(P.size());
-//         int y = xor64(P.size());
-//         while(fixed_cells.count(mp(x, y))){
-//             x = xor64(P.size());
-//             y = xor64(P.size());
-//         }
-//         int dP = xor64(2) * 2 - 1;
-//         return {x, y, dP};
-//     }
+    ll calc_score(){
+        ll score_ = INF;
+        rep(i, N){
+            rep(j, i+1, N){
+                ll dist = calc_dist(i, j);
+                if(chmin(score_, dist)) min_i = i;
+            }
+        }
+        return - score_;
+    }
 
-//     ll get_new_score(Change1 c){
-//         int x = c.x, y = c.y, dP = c.dP;
-//         if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
-//         ll new_score = score;
-//         new_score -= mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
-//         new_score -= mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
-//         new_score -= mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
-//         new_score -= mypow<ll>(P[(x - 1 + L) % L][y] - P[x][y], 2);
-//         P[x][y] += dP;
-//         new_score += mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
-//         new_score += mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
-//         new_score += mypow<ll>(P[x][(y - 1 + L) % L] - P[x][y], 2);
-//         new_score += mypow<ll>(P[(x - 1 + L) % L][y] - P[x][y], 2);
-//         P[x][y] -= dP;
-//         return new_score;
-//     }  
+    State2(mat<ll> P, int measure_cell) : P(P), measure_cell(measure_cell){
+        score = calc_score();
+    }
 
-//     void step(Change1 c, ll new_score){
-//         int x = c.x, y = c.y, dP = c.dP;
-//         P[x][y] += dP;
-//         score = new_score;
-//     } // 実際の更新
+    Change2 generate_change(){
+        int i = min_i;
+        int k = xor64(measure_cell);
+        int x = nml(X[i] + dx[k]);
+        int y = nml(Y[i] + dy[k]);
+        int dP = xor64(2) * 2 - 1;
+        return {x, y, dP};
+    }
 
-//     bool operator<(const State1 &rhs) const {
-//         return score < rhs.score;
-//     }
-// };
+    ll get_new_score(Change2 c){
+        int x = c.x, y = c.y, dP = c.dP;
+        if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
+        P[x][y] += dP;
+        ll new_score = calc_score();
+        P[x][y] -= dP;
+        return new_score;
+    }  
+
+    void step(Change2 c, ll new_score){
+        int x = c.x, y = c.y, dP = c.dP;
+        P[x][y] += dP;
+        score = new_score;
+    } // 実際の更新
+};
 
 
 template<typename State, typename Change>
@@ -566,6 +574,10 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    State2 state2(P, measure_cells);
+    state2 = hill_climbing<State2, Change2>(state2);
+    P = state2.P;
+
     rep(i, N){
         rep(j, measure_cells){
             int x = nml(X[i] + dx[j]);
