@@ -569,6 +569,8 @@ int main(int argc, char *argv[]) {
     if(S >= 100) measure_cells = 9;
     if(S >= 750) measure_cells = 13;
     if(N * measure_cells / L / L > 0.5) measure_cells += 4;
+    if(argc == 2) measure_cells = stoi(argv[1]);
+
     mat<int> true_tmps(N, vi(measure_cells, 0));
     mat<ll> P(L, vl(L, 0));
     set<pair<int, int>> fixed_cells;
@@ -703,9 +705,4 @@ int main(int argc, char *argv[]) {
     rep(i, N){
         cout << E[i] << endl;
     }
-
-    // debug
-    debug(S);
-    debug(tmp_coef);
-    debug(measure_coef);
 }
