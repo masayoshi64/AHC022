@@ -702,4 +702,9 @@ int main(int argc, char *argv[]) {
     rep(i, N){
         cout << E[i] << endl;
     }
+
+    // debug
+    debug(S);
+    debug(tmp_coef);
+    debug(measure_coef);
 }
