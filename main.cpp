@@ -434,12 +434,12 @@ struct State1{
             y = xor64(P.size());
         }
         int dP = xor64(2) * 2 - 1;
+        if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
         return {x, y, dP};
     }
 
     ll get_new_score(Change1 c){
         int x = c.x, y = c.y, dP = c.dP;
-        if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
         ll new_score = score;
         new_score -= mypow<ll>(P[x][(y + 1) % L] - P[x][y], 2);
         new_score -= mypow<ll>(P[(x + 1) % L][y] - P[x][y], 2);
@@ -511,12 +511,12 @@ struct State2{
         int x = nml(X[i] + dx[k]);
         int y = nml(Y[i] + dy[k]);
         int dP = xor64(2) * 2 - 1;
+        if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
         return {x, y, dP};
     }
 
     ll get_new_score(Change2 c){
         int x = c.x, y = c.y, dP = c.dP;
-        if(P[x][y] + dP < min_tmp || P[x][y] + dP > max_tmp) dP *= -1;
         P[x][y] += dP;
         ll new_score = calc_score();
         P[x][y] -= dP;
@@ -534,7 +534,7 @@ struct State2{
 template<typename State, typename Change>
 State hill_climbing(State state){
     Timer timer;
-    double max_time = 1500;
+    double max_time = 100;
     while (timer.lap() < max_time) {
         double score = state.score;
         Change change = state.generate_change();
