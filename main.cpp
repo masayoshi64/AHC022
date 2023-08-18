@@ -568,6 +568,7 @@ int main(int argc, char *argv[]) {
     // 配置
     int measure_cells = 5;
     if(S >= 100) measure_cells = 9;
+    if(S >= 750) measure_cells = 13;
     mat<int> true_tmps(N, vi(measure_cells, 0));
     mat<ll> P(L, vl(L, 0));
     set<pair<int, int>> fixed_cells;
