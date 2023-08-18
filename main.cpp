@@ -540,7 +540,7 @@ struct State2{
 template<typename State, typename Change>
 State hill_climbing(State state){
     Timer timer;
-    double max_time = 100;
+    double max_time = 1500;
     while (timer.lap() < max_time) {
         double score = state.score;
         Change change = state.generate_change();
@@ -574,11 +574,7 @@ int main(int argc, char *argv[]) {
     set<pair<int, int>> fixed_cells;
     rep(x, L){
         rep(y, L){
-            if(S <= 750){
-                P[x][y] = xor64(max_tmp);
-            }else{
-                P[x][y] = xor64(2) * max_tmp;
-            }
+            P[x][y] = xor64(max_tmp);
         }
     }
     State2 state2(P, measure_cells);
